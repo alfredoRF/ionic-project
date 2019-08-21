@@ -42,7 +42,8 @@ export class PlaceDetailPage implements OnInit {
           text: 'Random Date'
         },
         {
-          text: 'Cancel'
+          text: 'Cancel',
+          role: 'cancel'
         }
       ]
     });
