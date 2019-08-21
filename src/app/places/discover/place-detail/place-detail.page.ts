@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NavController, ModalController } from '@ionic/angular';
+import { NavController, ModalController, ActionSheetController } from '@ionic/angular';
 
 import { PlacesService } from '../../places.service';
 import { Place } from '../../place.model';
@@ -17,7 +17,8 @@ export class PlaceDetailPage implements OnInit {
   constructor(private route: ActivatedRoute,
               private navCtrl: NavController,
               private pService: PlacesService,
-              private modalController: ModalController) { }
+              private modalController: ModalController,
+              private actionSheetCtrl: ActionSheetController) { }
 
   ngOnInit() {
     this.route.paramMap.subscribe(paramMap => {
@@ -31,6 +32,20 @@ export class PlaceDetailPage implements OnInit {
 
   onBookPlace() {
     // this.navCtrl.navigateBack('/places/tabs/discover');
+    this.actionSheetCtrl.create({
+      header: 'chose an Action',
+      buttons: [
+        {
+          text: 'Select Date'
+        },
+        {
+          text: 'Random Date'
+        },
+        {
+          text: 'Cancel'
+        }
+      ]
+    });
     this.modalController.create({
       component: CreateBookingComponent,
       componentProps: { selectedPlace: this.place}

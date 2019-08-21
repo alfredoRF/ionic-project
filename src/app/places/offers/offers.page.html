@@ -30,7 +30,8 @@
               </ion-label>
             </ion-item>
             <ion-item-options>
-              <ion-item-option color="secondary" (click)="onEdit(offer.id)">
+              <ion-item-option color="secondary" [routerLink]="['/', 'places', 'tabs', 'offers', 'edit', offer.id]">
+                <ion-icon name="create" slot="top"></ion-icon>
                 Edit
               </ion-item-option>
             </ion-item-options>
