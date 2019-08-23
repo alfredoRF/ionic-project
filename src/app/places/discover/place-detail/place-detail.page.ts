@@ -36,17 +36,30 @@ export class PlaceDetailPage implements OnInit {
       header: 'chose an Action',
       buttons: [
         {
-          text: 'Select Date'
+          text: 'Select Date',
+          handler: () => {
+            this.openBookingModal('select');
+          }
         },
         {
-          text: 'Random Date'
+          text: 'Random Date',
+          handler: () => {
+            this.openBookingModal('random');
+          }
         },
         {
           text: 'Cancel',
           role: 'cancel'
         }
       ]
+    }).then(actionSheetEl => {
+      actionSheetEl.present();
     });
+
+  }
+
+  openBookingModal(mode: 'select' | 'random') {
+    console.log(mode);
     this.modalController.create({
       component: CreateBookingComponent,
       componentProps: { selectedPlace: this.place}
@@ -60,5 +73,4 @@ export class PlaceDetailPage implements OnInit {
       }
     });
   }
-
 }
