@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { PlacesService } from '../places.service';
 import { Place } from '../place.model';
+import { AuthService } from 'src/app/auth/auth.service';
 
 @Component({
   selector: 'app-discover',
@@ -12,13 +13,19 @@ import { Place } from '../place.model';
 })
 export class DiscoverPage implements OnInit , OnDestroy {
   loadedPlaces: Place[];
+  listedLoadedPlaces: Place[];
+  relevantPlaces: Place[];
   private placesSub: Subscription;
+  private filter = 'all';
 
-  constructor(private placesService: PlacesService) { }
+  constructor(private placesService: PlacesService, private authService: AuthService) { }
 
   ngOnInit() {
     this.placesSub = this.placesService.places.subscribe(places => {
       this.loadedPlaces = places;
+      this.onFilterUpdate(this.filter);
+      // this.listedLoadedPlaces = this.loadedPlaces.slice(1);
+      // this.relevantPlaces = this.loadedPlaces;
       // this.loadedPlaces = this.placesService.places.;
     });
   }
@@ -29,8 +36,9 @@ export class DiscoverPage implements OnInit , OnDestroy {
     }
   }
 
-  onFilterUpdate(event: CustomEvent<SegmentChangeEventDetail>) {
-    console.log(event.detail);
+  onFilterUpdate(filter: string) {
+    const isShown = place => filter === 'all' || place.userId !== this.authService.userId;
+    this.relevantPlaces = this.loadedPlaces.filter(isShown);
+    this.filter = filter;
   }
-
 }
