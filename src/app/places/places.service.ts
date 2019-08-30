@@ -1,55 +1,52 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { take, map, tap, delay, switchMap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 import { Place } from './place.model';
 import { AuthService } from '../auth/auth.service';
-import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class PlacesService {
-  private placesA = new BehaviorSubject<Place[]>([
-    new Place(
-      'p1',
-      'Manhattan Mansion',
-      'In the heart of New York City',
-      'https://untappedcities-wpengine.netdna-ssl.com/wp-content/uploads/' +
-      '2012/02/Cornelius-Vanderbilt-II-House-Fifth-Avenue-Central-Park-NYC.jpg',
-      189.99,
-      new Date('2019-01-01'),
-      new Date('2020-12-31'),
-      'abc'
-    ),
-    new Place(
-      'p2',
-      'L\'Amour Toujours',
-      'A romantic place in paris!',
-      'https://travel.home.sndimg.com/content/dam/images/travel/stock/2016/8/23/0/GettyImages-Jurgen-Roberg-EyeEm-' +
-      '609242177-France-Basilique-Du-Sacre-Coeur.jpg.rend.hgtvcom.966.644.suffix/1491594361714.jpeg',
-      149.99,
-      new Date('2019-01-01'),
-      new Date('2020-12-31'),
-      'abc'
-    ),
-    new Place(
-      'p3',
-      'The Foggy Place',
-      'Not your average city trip!',
-      'http://s1.favim.com/orig/140329/abandoned-cabin-foggy-forest-Favim.com-1571590.jpg',
-      99.99,
-      new Date('2019-01-01'),
-      new Date('2020-12-31'),
-      'abc'
-    )
-  ]);
+  private placesA = new BehaviorSubject<Place[]>([]);
 
   get places() {
     return this.placesA.asObservable();
   }
 
   constructor(private authService: AuthService, private http: HttpClient) { }
+
+  fetchPlaces() {
+    return this.http
+      .get<{ [key: string]: PlaceData }>('https://ionic-angular-course-56fb5.firebaseio.com/offered-places.json')
+      .pipe(map(resData => {
+        const places = [];
+        for (const key in resData) {
+          if (resData.hasOwnProperty(key)) {
+            places.push(
+              new Place(
+                key,
+                resData[key].title,
+                resData[key].description,
+                resData[key].imageUrl,
+                resData[key].price,
+                new Date(resData[key].availableFrom),
+                new Date(resData[key].availableTo),
+                resData[key].userId
+              )
+            );
+          }
+        }
+        return places;
+      }),
+        tap(places => {
+          this.placesA.next(places);
+        })
+      );
+  }
 
   getPlace(id: string) {
     return this.places.pipe(take(1), map(places => {
@@ -69,29 +66,44 @@ export class PlacesService {
       dateTo,
       this.authService.userId
     );
-    return this.http.post<{name: string}>('https://ionic-angular-course-56fb5.firebaseio.com/offered-places.json',
-    { ...newPlace, id: null }).pipe(
-      switchMap( resData => {
-        generId = resData.name;
-        return this.places;
-      }), take(1), tap(places => {
-        newPlace.id = generId;
-        this.placesA.next(places.concat(newPlace));
-      })
-    );
+    return this.http.post<{ name: string }>('https://ionic-angular-course-56fb5.firebaseio.com/offered-places.json',
+      { ...newPlace, id: null }).pipe(
+        switchMap(resData => {
+          generId = resData.name;
+          return this.places;
+        }), take(1), tap(places => {
+          newPlace.id = generId;
+          this.placesA.next(places.concat(newPlace));
+        })
+      );
     /* return this.places.pipe(take(1), delay(1000), tap(places => {
       this.placesA.next(places.concat(newPlace));
     })); */
   }
 
   updatePlace(placeId: string, title: string, description: string) {
-    return this.places.pipe(take(1), delay(1000), tap(places => {
+    let updatedPlaces: Place[];
+    this.places.pipe(take(1), switchMap(places => {
       const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
-      const updatedPlaces = [...places];
+      updatedPlaces = [...places];
       const oldPlace = updatedPlaces[updatedPlaceIndex];
       updatedPlaces[updatedPlaceIndex] = new Place(oldPlace.id, title, description, oldPlace.imageUrl, oldPlace.price,
-        oldPlace.availableFrom, oldPlace.availableTo, oldPlace.userId );
+        oldPlace.availableFrom, oldPlace.availableTo, oldPlace.userId);
+      return this.http.put(`https://ionic-angular-course-56fb5.firebaseio.com/offered-places/${placeId}.json`,
+        { ...updatedPlaces[updatedPlaceIndex], id: null }
+      );
+    }), tap(() => {
       this.placesA.next(updatedPlaces);
     }));
   }
+}
+
+interface PlaceData {
+  availableFrom: string;
+  availableTo: string;
+  description: string;
+  imageUrl: string;
+  price: number;
+  title: string;
+  userId: string;
 }
